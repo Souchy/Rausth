@@ -23,6 +23,31 @@ A reusable authentication server API in Rust using Rocket framework.
   - Enable/disable authentication methods via configuration
   - Support for both TOML config files and environment variables
 
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/Souchy/Rausth.git
+cd Rausth
+
+# Set up database
+createdb rausth
+
+# Configure (copy and edit)
+cp .env.example .env
+
+# Build and run
+cargo build --release
+cargo run --release
+```
+
+The server will start on `http://localhost:8000`.
+
+## Documentation
+
+- [Usage Guide](USAGE.md) - Detailed API usage examples
+- [Contributing](CONTRIBUTING.md) - How to contribute to the project
+
 ## Requirements
 
 - Rust 1.70 or higher
@@ -216,10 +241,40 @@ Run in development mode:
 cargo run
 ```
 
+Format code:
+```bash
+cargo fmt
+```
+
+Check for issues:
+```bash
+cargo clippy
+```
+
+## Examples
+
+See [USAGE.md](USAGE.md) for detailed usage examples including:
+- Complete authentication flows
+- OAuth provider setup
+- Integration with frontend applications
+- Error handling
+
 ## License
 
 This project is available under the MIT License.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Roadmap
+
+Future enhancements:
+- Additional OAuth providers (Apple, Twitter, etc.)
+- Two-factor authentication (2FA)
+- Email verification
+- Password reset functionality
+- Rate limiting
+- Session management
+- Admin API for user management
+
