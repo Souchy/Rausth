@@ -1598,6 +1598,7 @@ dependencies = [
 name = "rausth"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bcrypt",
  "chrono",
  "http 0.2.12",

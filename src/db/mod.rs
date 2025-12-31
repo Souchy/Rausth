@@ -1,9 +1,17 @@
-use sqlx::{PgPool, postgres::PgPoolOptions};
-use once_cell::sync::OnceCell;
+mod service;
+mod postgres;
 
-static DB_POOL: OnceCell<PgPool> = OnceCell::new();
+pub use service::DatabaseService;
+pub use postgres::PostgresService;
 
-pub async fn get_pool() -> Result<&'static PgPool, sqlx::Error> {
+// Legacy function for backward compatibility
+// TODO: Remove this once all code is migrated to use DatabaseService trait
+pub async fn get_pool() -> Result<&'static sqlx::PgPool, sqlx::Error> {
+    use once_cell::sync::OnceCell;
+    use sqlx::{PgPool, postgres::PgPoolOptions};
+    
+    static DB_POOL: OnceCell<PgPool> = OnceCell::new();
+    
     if let Some(pool) = DB_POOL.get() {
         return Ok(pool);
     }
