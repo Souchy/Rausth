@@ -1,8 +1,29 @@
-use rocket_db_pools::{sqlx, Database};
+use sqlx::{PgPool, postgres::PgPoolOptions};
+use once_cell::sync::OnceCell;
 
-#[derive(Database)]
-#[database("postgres")]
-pub struct Db(sqlx::PgPool);
+static DB_POOL: OnceCell<PgPool> = OnceCell::new();
+
+pub async fn get_pool() -> Result<&'static PgPool, sqlx::Error> {
+    if let Some(pool) = DB_POOL.get() {
+        return Ok(pool);
+    }
+
+    let database_url = std::env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await?;
+    
+    // Run migrations
+    sqlx::query(migrations::INIT_SQL)
+        .execute(&pool)
+        .await?;
+    
+    DB_POOL.set(pool).map_err(|_| sqlx::Error::PoolClosed)?;
+    Ok(DB_POOL.get().unwrap())
+}
 
 pub mod migrations {
     pub const INIT_SQL: &str = r#"

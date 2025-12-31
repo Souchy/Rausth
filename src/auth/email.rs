@@ -3,7 +3,7 @@ use crate::utils::{AuthError, AuthResult};
 use crate::auth::jwt::JwtService;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::Utc;
-use sqlx::PgConnection;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 pub struct EmailPasswordAuth {
@@ -17,7 +17,7 @@ impl EmailPasswordAuth {
 
     pub async fn register(
         &self,
-        db: &mut PgConnection,
+        db: &PgPool,
         request: RegisterRequest,
     ) -> AuthResult<AuthResponse> {
         // Check if user already exists
@@ -25,7 +25,7 @@ impl EmailPasswordAuth {
             "SELECT * FROM users WHERE email = $1 AND provider = 'email'"
         )
         .bind(&request.email)
-        .fetch_optional(&mut *db)
+        .fetch_optional(db)
         .await?;
 
         if existing_user.is_some() {
@@ -45,7 +45,7 @@ impl EmailPasswordAuth {
         )
         .bind(&request.email)
         .bind(&password_hash)
-        .fetch_one(&mut *db)
+        .fetch_one(db)
         .await?;
 
         // Generate tokens
@@ -54,7 +54,7 @@ impl EmailPasswordAuth {
 
     pub async fn login(
         &self,
-        db: &mut PgConnection,
+        db: &PgPool,
         request: LoginRequest,
     ) -> AuthResult<AuthResponse> {
         // Fetch the user
@@ -62,7 +62,7 @@ impl EmailPasswordAuth {
             "SELECT * FROM users WHERE email = $1 AND provider = 'email'"
         )
         .bind(&request.email)
-        .fetch_optional(&mut *db)
+        .fetch_optional(db)
         .await?
         .ok_or(AuthError::InvalidCredentials)?;
 
@@ -80,7 +80,7 @@ impl EmailPasswordAuth {
 
     async fn generate_auth_response(
         &self,
-        db: &mut PgConnection,
+        db: &PgPool,
         user_id: Uuid,
     ) -> AuthResult<AuthResponse> {
         let access_token = self.jwt_service.generate_access_token(user_id)?;
@@ -100,7 +100,7 @@ impl EmailPasswordAuth {
         .bind(user_id)
         .bind(&refresh_token)
         .bind(refresh_token_expiry)
-        .execute(&mut *db)
+        .execute(db)
         .await?;
 
         Ok(AuthResponse {

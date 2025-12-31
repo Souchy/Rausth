@@ -2,7 +2,7 @@ use crate::models::{AuthResponse, RefreshToken, RefreshTokenRequest};
 use crate::utils::{AuthError, AuthResult};
 use crate::auth::jwt::JwtService;
 use chrono::Utc;
-use sqlx::PgConnection;
+use sqlx::PgPool;
 
 pub struct RefreshTokenService {
     jwt_service: JwtService,
@@ -15,7 +15,7 @@ impl RefreshTokenService {
 
     pub async fn refresh(
         &self,
-        db: &mut PgConnection,
+        db: &PgPool,
         request: RefreshTokenRequest,
     ) -> AuthResult<AuthResponse> {
         // Fetch the refresh token
@@ -23,7 +23,7 @@ impl RefreshTokenService {
             "SELECT * FROM refresh_tokens WHERE token = $1"
         )
         .bind(&request.refresh_token)
-        .fetch_optional(&mut *db)
+        .fetch_optional(db)
         .await?
         .ok_or(AuthError::InvalidToken)?;
 
@@ -32,7 +32,7 @@ impl RefreshTokenService {
             // Delete expired token
             sqlx::query("DELETE FROM refresh_tokens WHERE id = $1")
                 .bind(token.id)
-                .execute(&mut *db)
+                .execute(db)
                 .await?;
             return Err(AuthError::TokenExpired);
         }
@@ -40,7 +40,7 @@ impl RefreshTokenService {
         // Delete old refresh token
         sqlx::query("DELETE FROM refresh_tokens WHERE id = $1")
             .bind(token.id)
-            .execute(&mut *db)
+            .execute(db)
             .await?;
 
         // Generate new tokens
@@ -61,7 +61,7 @@ impl RefreshTokenService {
         .bind(token.user_id)
         .bind(&new_refresh_token)
         .bind(refresh_token_expiry)
-        .execute(&mut *db)
+        .execute(db)
         .await?;
 
         Ok(AuthResponse {

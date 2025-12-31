@@ -1,6 +1,6 @@
 # Rausth
 
-A reusable authentication server API in Rust using Rocket framework.
+A reusable authentication server API in Rust for Vercel Serverless Functions.
 
 ## Features
 
@@ -19,11 +19,14 @@ A reusable authentication server API in Rust using Rocket framework.
   - Automatic user creation on first authentication
   - User data storage in PostgreSQL
 
-- **Flexible Configuration**:
-  - Enable/disable authentication methods via configuration
-  - Support for both TOML config files and environment variables
+- **Serverless Architecture**:
+  - Deployed as Vercel Serverless Functions
+  - Automatic scaling
+  - Low latency with global edge network
 
 ## Quick Start
+
+### Local Development
 
 ```bash
 # Clone the repository
@@ -33,15 +36,34 @@ cd Rausth
 # Set up database
 createdb rausth
 
-# Configure (copy and edit)
-cp .env.example .env
+# Configure environment variables
+export DATABASE_URL="******localhost/rausth"
+export JWT_SECRET="your-secret-key"
+export AUTH_EMAIL_PASSWORD="true"
 
-# Build and run
+# Build
 cargo build --release
-cargo run --release
 ```
 
-The server will start on `http://localhost:8000`.
+### Deploy to Vercel
+
+1. Install Vercel CLI:
+```bash
+npm i -g vercel
+```
+
+2. Set up environment variables in Vercel:
+```bash
+vercel env add DATABASE_URL
+vercel env add JWT_SECRET
+vercel env add AUTH_EMAIL_PASSWORD
+# Add other environment variables as needed
+```
+
+3. Deploy:
+```bash
+vercel deploy
+```
 
 ## Documentation
 
@@ -51,40 +73,8 @@ The server will start on `http://localhost:8000`.
 ## Requirements
 
 - Rust 1.70 or higher
-- PostgreSQL database
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/Souchy/Rausth.git
-cd Rausth
-```
-
-2. Set up PostgreSQL database:
-```bash
-createdb rausth
-```
-
-3. Configure the application (choose one method):
-
-   **Option A: Using environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-   **Option B: Using config file**
-   ```bash
-   cp config.toml.example config.toml
-   # Edit config.toml with your configuration
-   ```
-
-4. Build and run:
-```bash
-cargo build --release
-cargo run --release
-```
+- PostgreSQL database (e.g., Vercel Postgres, Neon, Supabase)
+- Vercel account for deployment
 
 ## Configuration
 
@@ -95,7 +85,7 @@ cargo run --release
 
 ### Authentication Methods
 
-Enable or disable authentication methods in your configuration:
+Enable or disable authentication methods via environment variables:
 
 - `AUTH_EMAIL_PASSWORD`: Enable email/password authentication (default: true)
 - `AUTH_GOOGLE_ENABLED`: Enable Google OAuth (default: false)
@@ -104,22 +94,43 @@ Enable or disable authentication methods in your configuration:
 
 ### OAuth Provider Configuration
 
-For each OAuth provider you want to enable:
+For each OAuth provider you want to enable, set these environment variables:
 
-1. Register your application with the provider
-2. Obtain client ID and client secret
-3. Configure the redirect URI
-4. Add the credentials to your configuration
+**Google OAuth:**
+```bash
+AUTH_GOOGLE_ENABLED=true
+AUTH_GOOGLE_CLIENT_ID=your-google-client-id
+AUTH_GOOGLE_CLIENT_SECRET=your-google-client-secret
+AUTH_GOOGLE_REDIRECT_URI=https://your-domain.vercel.app/api/oauth/google/callback
+```
 
-See `.env.example` or `config.toml.example` for detailed configuration options.
+**Microsoft OAuth:**
+```bash
+AUTH_MICROSOFT_ENABLED=true
+AUTH_MICROSOFT_CLIENT_ID=your-microsoft-client-id
+AUTH_MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
+AUTH_MICROSOFT_REDIRECT_URI=https://your-domain.vercel.app/api/oauth/microsoft/callback
+```
+
+**GitHub OAuth:**
+```bash
+AUTH_GITHUB_ENABLED=true
+AUTH_GITHUB_CLIENT_ID=your-github-client-id
+AUTH_GITHUB_CLIENT_SECRET=your-github-client-secret
+AUTH_GITHUB_REDIRECT_URI=https://your-domain.vercel.app/api/oauth/github/callback
+```
+
+See `.env.example` for a complete configuration example.
 
 ## API Endpoints
+
+All endpoints are deployed as serverless functions at `/api/*`.
 
 ### Email/Password Authentication
 
 **Register a new user**
 ```http
-POST /auth/register
+POST /api/register
 Content-Type: application/json
 
 {
@@ -130,7 +141,7 @@ Content-Type: application/json
 
 **Login**
 ```http
-POST /auth/login
+POST /api/login
 Content-Type: application/json
 
 {
@@ -143,12 +154,12 @@ Content-Type: application/json
 
 **Google OAuth**
 ```http
-GET /auth/oauth/google
+GET /api/oauth/google
 ```
 Redirects to Google login page.
 
 ```http
-POST /auth/oauth/google/callback
+POST /api/oauth/google/callback
 Content-Type: application/json
 
 {
@@ -158,11 +169,11 @@ Content-Type: application/json
 
 **Microsoft OAuth**
 ```http
-GET /auth/oauth/microsoft
+GET /api/oauth/microsoft
 ```
 
 ```http
-POST /auth/oauth/microsoft/callback
+POST /api/oauth/microsoft/callback
 Content-Type: application/json
 
 {
@@ -172,11 +183,11 @@ Content-Type: application/json
 
 **GitHub OAuth**
 ```http
-GET /auth/oauth/github
+GET /api/oauth/github
 ```
 
 ```http
-POST /auth/oauth/github/callback
+POST /api/oauth/github/callback
 Content-Type: application/json
 
 {
@@ -187,7 +198,7 @@ Content-Type: application/json
 ### Token Refresh
 
 ```http
-POST /auth/refresh
+POST /api/refresh
 Content-Type: application/json
 
 {
@@ -210,35 +221,36 @@ All authentication endpoints return the same response format:
 
 ## Database Schema
 
-The application automatically creates the required database tables on startup:
+The application automatically creates the required database tables on first connection:
 
 - `users`: Stores user information and authentication details
 - `refresh_tokens`: Stores refresh tokens with expiration
 
 ## Security Considerations
 
-- Always use HTTPS in production
-- Change the default JWT secret
-- Use strong passwords for database connections
-- Rotate refresh tokens after use
+- Always use HTTPS in production (Vercel provides this by default)
+- Set a strong JWT secret in environment variables
+- Use connection pooling for database (configured by default)
+- Rotate refresh tokens after use (automatic)
 - Set appropriate token expiration times
-- Keep OAuth client secrets secure
+- Keep OAuth client secrets in Vercel environment variables, not in code
+- Use Vercel Postgres or another managed PostgreSQL service with SSL
 
 ## Development
 
-Build the project:
+Build the library:
 ```bash
-cargo build
+cargo build --lib
 ```
 
-Run tests:
+Build a specific function:
 ```bash
-cargo test
+cargo build --bin register
 ```
 
-Run in development mode:
+Check all functions:
 ```bash
-cargo run
+cargo check --bins
 ```
 
 Format code:
@@ -251,6 +263,41 @@ Check for issues:
 cargo clippy
 ```
 
+## Deployment
+
+### Vercel Deployment
+
+1. **Install Vercel CLI:**
+```bash
+npm i -g vercel
+```
+
+2. **Link your project:**
+```bash
+vercel link
+```
+
+3. **Set environment variables:**
+```bash
+vercel env add DATABASE_URL production
+vercel env add JWT_SECRET production
+# Add other variables as needed
+```
+
+4. **Deploy:**
+```bash
+vercel deploy --prod
+```
+
+### Environment Variables in Vercel
+
+Set these in your Vercel project settings or via CLI:
+
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret for JWT signing
+- `AUTH_EMAIL_PASSWORD` - Enable email/password auth
+- OAuth configuration variables (if using OAuth)
+
 ## Examples
 
 See [USAGE.md](USAGE.md) for detailed usage examples including:
@@ -258,6 +305,7 @@ See [USAGE.md](USAGE.md) for detailed usage examples including:
 - OAuth provider setup
 - Integration with frontend applications
 - Error handling
+- Vercel deployment guide
 
 ## License
 

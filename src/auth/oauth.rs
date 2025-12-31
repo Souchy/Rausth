@@ -10,7 +10,7 @@ use oauth2::{
     reqwest::async_http_client,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgConnection;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -71,7 +71,7 @@ impl OAuthService {
         provider: OAuthProvider,
         config: &OAuthProviderConfig,
         code: String,
-        db: &mut PgConnection,
+        db: &PgPool,
     ) -> AuthResult<AuthResponse> {
         let client = self.create_client(provider.clone(), config)?;
 
@@ -216,7 +216,7 @@ impl OAuthService {
 
     async fn find_or_create_user(
         &self,
-        db: &mut PgConnection,
+        db: &PgPool,
         email: &str,
         provider_id: &str,
         provider: &str,
@@ -227,7 +227,7 @@ impl OAuthService {
         )
         .bind(provider)
         .bind(provider_id)
-        .fetch_optional(&mut *db)
+        .fetch_optional(db)
         .await?
         {
             return Ok(user);
@@ -244,7 +244,7 @@ impl OAuthService {
         .bind(email)
         .bind(provider)
         .bind(provider_id)
-        .fetch_one(&mut *db)
+        .fetch_one(db)
         .await?;
 
         Ok(user)
@@ -252,7 +252,7 @@ impl OAuthService {
 
     async fn generate_auth_response(
         &self,
-        db: &mut PgConnection,
+        db: &PgPool,
         user_id: Uuid,
     ) -> AuthResult<AuthResponse> {
         let access_token = self.jwt_service.generate_access_token(user_id)?;
@@ -272,7 +272,7 @@ impl OAuthService {
         .bind(user_id)
         .bind(&refresh_token)
         .bind(refresh_token_expiry)
-        .execute(&mut *db)
+        .execute(db)
         .await?;
 
         Ok(AuthResponse {

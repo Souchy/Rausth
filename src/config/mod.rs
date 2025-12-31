@@ -1,19 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub auth: AuthConfig,
     pub jwt: JwtConfig,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerConfig {
-    pub host: String,
-    pub port: u16,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,22 +36,8 @@ pub struct JwtConfig {
 }
 
 impl Config {
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
-        let contents = fs::read_to_string(path)?;
-        let config: Config = toml::from_str(&contents)?;
-        Ok(config)
-    }
-
     pub fn from_env() -> Result<Self, Box<dyn std::error::Error>> {
-        dotenv::dotenv().ok();
-        
         let config = Config {
-            server: ServerConfig {
-                host: std::env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
-                port: std::env::var("SERVER_PORT")
-                    .unwrap_or_else(|_| "8000".to_string())
-                    .parse()?,
-            },
             database: DatabaseConfig {
                 url: std::env::var("DATABASE_URL")?,
             },

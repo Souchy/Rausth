@@ -1,8 +1,3 @@
-use rocket::http::Status;
-use rocket::response::{self, Responder};
-use rocket::{Request, Response};
-use serde_json::json;
-use std::io::Cursor;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -39,29 +34,6 @@ pub enum AuthError {
     
     #[error("Internal server error")]
     InternalError,
-}
-
-impl<'r> Responder<'r, 'static> for AuthError {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let status = match self {
-            AuthError::InvalidCredentials => Status::Unauthorized,
-            AuthError::UserAlreadyExists => Status::Conflict,
-            AuthError::UserNotFound => Status::NotFound,
-            AuthError::InvalidToken | AuthError::TokenExpired => Status::Unauthorized,
-            AuthError::ConfigError(_) => Status::BadRequest,
-            _ => Status::InternalServerError,
-        };
-
-        let error_message = json!({
-            "error": self.to_string()
-        });
-
-        Response::build()
-            .status(status)
-            .sized_body(None, Cursor::new(error_message.to_string()))
-            .header(rocket::http::ContentType::JSON)
-            .ok()
-    }
 }
 
 pub type AuthResult<T> = Result<T, AuthError>;

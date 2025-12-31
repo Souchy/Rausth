@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/register.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/login.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/refresh.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/oauth/google.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/oauth/google-callback.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/oauth/microsoft.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/oauth/microsoft-callback.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/oauth/github.rs",
+      "use": "vercel-rust@4.0.0"
+    },
+    {
+      "src": "api/oauth/github-callback.rs",
+      "use": "vercel-rust@4.0.0"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/register",
+      "dest": "api/register.rs"
+    },
+    {
+      "src": "/api/login",
+      "dest": "api/login.rs"
+    },
+    {
+      "src": "/api/refresh",
+      "dest": "api/refresh.rs"
+    },
+    {
+      "src": "/api/oauth/google",
+      "dest": "api/oauth/google.rs"
+    },
+    {
+      "src": "/api/oauth/google/callback",
+      "dest": "api/oauth/google-callback.rs"
+    },
+    {
+      "src": "/api/oauth/microsoft",
+      "dest": "api/oauth/microsoft.rs"
+    },
+    {
+      "src": "/api/oauth/microsoft/callback",
+      "dest": "api/oauth/microsoft-callback.rs"
+    },
+    {
+      "src": "/api/oauth/github",
+      "dest": "api/oauth/github.rs"
+    },
+    {
+      "src": "/api/oauth/github/callback",
+      "dest": "api/oauth/github-callback.rs"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "JWT_SECRET": "@jwt_secret"
+  }
+}
