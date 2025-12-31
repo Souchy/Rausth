@@ -28,6 +28,8 @@ impl UserRepo for RedisUserRepo {
                     ("id", &user.id),
                     ("email", &user.email),
                     ("name", &user.name),
+                    ("access_token", &user.access_token),
+                    ("refresh_token", &user.refresh_token),
                 ],
             )
             .await
@@ -80,6 +82,8 @@ impl UserRepo for RedisUserRepo {
             id: result.get("id").cloned().unwrap_or_default(),
             email: result.get("email").cloned().unwrap_or_default(),
             name: result.get("name").cloned().unwrap_or_default(),
+            access_token: result.get("access_token").cloned().unwrap_or_default(),
+            refresh_token: result.get("refresh_token").cloned().unwrap_or_default(),
         })
     }
 }

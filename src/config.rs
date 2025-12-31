@@ -77,6 +77,7 @@ pub enum DatabaseType {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub enum AuthProviderType {
+    EmailPassword,
     Microsoft,
     Google,
     GitHub,
