@@ -23,6 +23,7 @@ chrono = { version = "0.4", features = ["serde"] }
 thiserror = "1.0"
 bcrypt = "0.15"
 jsonwebtoken = "9.0"
+config = "0.13"
 
 # Each handler has to be specified as [[bin]]
 [[bin]]

@@ -5,6 +5,10 @@ pub struct User {
 	pub id: String,
 	pub email: String,
 	pub name: String,
+	pub access_token: String,
+	pub refresh_token: String,
+	// created_at?
+	// token_expiry?
 	// Add other relevant fields
 }
 

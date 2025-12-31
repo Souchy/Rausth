@@ -6,10 +6,11 @@ pub mod models;
 pub mod repo;
 pub mod db;
 pub mod error;
+pub mod auth_service;
 
-pub static CONFIG: Lazy<config::Config> = Lazy::new(|| {
-    config::Config::from_env().unwrap()
-});
+// pub static CONFIG: Lazy<config::Config> = Lazy::new(|| {
+//     config::Config::from_env().unwrap()
+// });
 
 pub static REQWEST_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
     reqwest::Client::new()

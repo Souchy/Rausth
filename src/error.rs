@@ -16,6 +16,12 @@ pub enum AuthError {
 
     #[error("Token expired")]
     TokenExpired,
+    
+    #[error("Not implemented: {0}")]
+    NotImplemented(String),
+
+    #[error("Network error: {0}")]
+    NetworkError(String),
 
     #[error("Database error: {0}")]
     DatabaseError(String), //#[from] sqlx::Error),

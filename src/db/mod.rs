@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 use once_cell::sync::OnceCell;
-use crate::{error::AuthResult, repo::{provider_repo::ProviderLinkRepo, user_repo::UserRepo}};
+use crate::{config::SETTINGS, error::AuthResult, repo::{provider_repo::ProviderLinkRepo, user_repo::UserRepo}};
 use inmemory::InMemoryDatabaseService;
 
 mod inmemory;
@@ -22,7 +22,7 @@ pub trait DatabaseService: Send + Sync {
 /// Get or initialize the global database service.
 ///
 /// This function returns a reference to the global database service singleton.
-/// On first call, it initializes the InMemory service and runs migrations.
+/// On first call, it initializes the database service and runs migrations.
 ///
 /// # Returns
 /// A reference to the database service implementation
@@ -35,7 +35,14 @@ pub async fn get_db_service() -> &'static Arc<dyn DatabaseService> {
     }
 
     // Initialize the database service
-    let service = Arc::new(InMemoryDatabaseService::new()) as Arc<dyn DatabaseService>;
+    let service = match SETTINGS.database.kind {
+        crate::config::DatabaseType::Redis => Arc::new(redis::RedisDatabaseService::new()) as Arc<dyn DatabaseService>,
+        crate::config::DatabaseType::InMemory => Arc::new(InMemoryDatabaseService::new()) as Arc<dyn DatabaseService>,
+        _ => {
+            panic!("Database type not supported yet");
+        }
+    };
+    // let service = Arc::new(InMemoryDatabaseService::new()) as Arc<dyn DatabaseService>;
 
     // Run migrations
     service.initialize().await.expect("Failed to initialize database");

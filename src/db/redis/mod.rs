@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use once_cell::sync::{Lazy, OnceCell};
 
 use crate::{
-    CONFIG, db::{
+    config::SETTINGS, db::{
         DatabaseService,
         redis::{provider_repo::RedisProviderLinkRepo, user_repo::RedisUserRepo},
     }, error::{AuthError, AuthResult}, repo::{provider_repo::ProviderLinkRepo, user_repo::UserRepo}
@@ -34,7 +34,7 @@ impl DatabaseService for RedisDatabaseService {
     async fn initialize(&self) -> AuthResult<()> {
 		// create client (sync) and set once
         let client = Arc::new(
-            redis::Client::open(CONFIG.db_url.clone()).expect("Invalid Redis URL")
+            redis::Client::open(SETTINGS.database.url.clone()).expect("Invalid Redis URL")
         );
         
         let conn = client
