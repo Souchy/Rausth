@@ -1,7 +1,10 @@
-use rausth::{auth::{JwtService, OAuthProvider, OAuthService}, config::Config, db, models::OAuthCallbackRequest, AuthError};
+use rausth::{auth::{JwtService, GitHubOAuthService}, config::Config, db, models::OAuthCallbackRequest, AuthError};
 use vercel_runtime::{run, Body, Error, Request, Response, StatusCode};
 use serde_json::json;
 
+/// Handle GitHub OAuth callback.
+///
+/// Exchanges the authorization code for tokens and creates/updates user in database.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     run(handler).await
@@ -29,9 +32,9 @@ pub async fn handler(_req: Request) -> Result<Response<Body>, Error> {
 
     let pool = db::get_pool().await.map_err(|e| Error::from(format!("Database error: {}", e)))?;
     let jwt_service = JwtService::new(config.jwt.clone());
-    let oauth_service = OAuthService::new(jwt_service);
+    let oauth_service = GitHubOAuthService::new(jwt_service);
 
-    match oauth_service.handle_callback(OAuthProvider::GitHub, oauth_config, request.code, pool).await {
+    match oauth_service.handle_callback(oauth_config, request.code, pool).await {
         Ok(response) => {
             Ok(Response::builder()
                 .status(StatusCode::OK)

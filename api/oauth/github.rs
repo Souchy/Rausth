@@ -1,7 +1,10 @@
-use rausth::{auth::{JwtService, OAuthProvider, OAuthService}, config::Config, AuthError};
+use rausth::{auth::{JwtService, GitHubOAuthService}, config::Config};
 use vercel_runtime::{run, Body, Error, Request, Response, StatusCode};
 use serde_json::json;
 
+/// Handle GitHub OAuth authorization request.
+///
+/// Generates an authorization URL and redirects the user to GitHub's login page.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     run(handler).await
@@ -19,9 +22,9 @@ pub async fn handler(_req: Request) -> Result<Response<Body>, Error> {
     };
 
     let jwt_service = JwtService::new(config.jwt.clone());
-    let oauth_service = OAuthService::new(jwt_service);
+    let oauth_service = GitHubOAuthService::new(jwt_service);
 
-    match oauth_service.get_authorization_url(OAuthProvider::GitHub, oauth_config) {
+    match oauth_service.get_authorization_url(oauth_config) {
         Ok((auth_url, _)) => {
             Ok(Response::builder()
                 .status(StatusCode::TEMPORARY_REDIRECT)

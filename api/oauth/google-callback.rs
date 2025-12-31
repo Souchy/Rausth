@@ -1,7 +1,11 @@
-use rausth::{auth::{JwtService, OAuthProvider, OAuthService}, config::Config, db, models::OAuthCallbackRequest, AuthError};
+use rausth::{auth::{JwtService, GoogleOAuthService}, config::Config, db, models::OAuthCallbackRequest, AuthError};
 use vercel_runtime::{run, Body, Error, Request, Response, StatusCode};
 use serde_json::json;
 
+/// Handle Google OAuth callback.
+///
+/// This endpoint receives the authorization code from Google after user authentication,
+/// exchanges it for an access token, retrieves user information, and issues application tokens.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     run(handler).await
@@ -41,9 +45,9 @@ pub async fn handler(_req: Request) -> Result<Response<Body>, Error> {
 
     // Process OAuth callback
     let jwt_service = JwtService::new(config.jwt.clone());
-    let oauth_service = OAuthService::new(jwt_service);
+    let oauth_service = GoogleOAuthService::new(jwt_service);
 
-    match oauth_service.handle_callback(OAuthProvider::Google, oauth_config, request.code, pool).await {
+    match oauth_service.handle_callback(oauth_config, request.code, pool).await {
         Ok(response) => {
             Ok(Response::builder()
                 .status(StatusCode::OK)

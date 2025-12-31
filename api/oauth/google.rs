@@ -1,7 +1,11 @@
-use rausth::{auth::{JwtService, OAuthProvider, OAuthService}, config::Config, AuthError};
+use rausth::{auth::{JwtService, GoogleOAuthService}, config::Config};
 use vercel_runtime::{run, Body, Error, Request, Response, StatusCode};
 use serde_json::json;
 
+/// Handle Google OAuth authorization request.
+///
+/// Generates an authorization URL and redirects the user to Google's login page.
+/// The user will be redirected back to the callback URL after authentication.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     run(handler).await
@@ -27,9 +31,9 @@ pub async fn handler(_req: Request) -> Result<Response<Body>, Error> {
 
     // Generate authorization URL
     let jwt_service = JwtService::new(config.jwt.clone());
-    let oauth_service = OAuthService::new(jwt_service);
+    let oauth_service = GoogleOAuthService::new(jwt_service);
 
-    match oauth_service.get_authorization_url(OAuthProvider::Google, oauth_config) {
+    match oauth_service.get_authorization_url(oauth_config) {
         Ok((auth_url, _csrf_token)) => {
             Ok(Response::builder()
                 .status(StatusCode::TEMPORARY_REDIRECT)
