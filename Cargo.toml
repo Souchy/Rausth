@@ -1,0 +1,61 @@
+[package]
+name = "rausth"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rausth"
+path = "src/lib.rs"
+
+[[bin]]
+name = "register"
+path = "api/register.rs"
+
+[[bin]]
+name = "login"
+path = "api/login.rs"
+
+[[bin]]
+name = "refresh"
+path = "api/refresh.rs"
+
+[[bin]]
+name = "google"
+path = "api/oauth/google.rs"
+
+[[bin]]
+name = "google-callback"
+path = "api/oauth/google-callback.rs"
+
+[[bin]]
+name = "microsoft"
+path = "api/oauth/microsoft.rs"
+
+[[bin]]
+name = "microsoft-callback"
+path = "api/oauth/microsoft-callback.rs"
+
+[[bin]]
+name = "github"
+path = "api/oauth/github.rs"
+
+[[bin]]
+name = "github-callback"
+path = "api/oauth/github-callback.rs"
+
+[dependencies]
+vercel_runtime = "1.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "uuid", "chrono", "migrate"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+bcrypt = "0.15"
+jsonwebtoken = "9.0"
+thiserror = "1.0"
+oauth2 = "4.4"
+reqwest = { version = "0.11", features = ["json"] }
+http = "0.2"
+once_cell = "1.19"
+async-trait = "0.1"

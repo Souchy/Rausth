@@ -1,0 +1,37 @@
+# Rausth Authentication Server Configuration
+
+[server]
+host = "127.0.0.1"
+port = 8000
+
+[database]
+url = "postgresql://username:password@localhost/rausth"
+
+[auth]
+email_password = true
+
+# Optional: Google OAuth Configuration
+[auth.google]
+enabled = false
+client_id = "your-google-client-id"
+client_secret = "your-google-client-secret"
+redirect_uri = "http://localhost:8000/auth/oauth/google/callback"
+
+# Optional: Microsoft OAuth Configuration
+[auth.microsoft]
+enabled = false
+client_id = "your-microsoft-client-id"
+client_secret = "your-microsoft-client-secret"
+redirect_uri = "http://localhost:8000/auth/oauth/microsoft/callback"
+
+# Optional: GitHub OAuth Configuration
+[auth.github]
+enabled = false
+client_id = "your-github-client-id"
+client_secret = "your-github-client-secret"
+redirect_uri = "http://localhost:8000/auth/oauth/github/callback"
+
+[jwt]
+secret = "your-secret-key-change-this-in-production"
+access_token_expiry_seconds = 3600      # 1 hour
+refresh_token_expiry_seconds = 604800   # 7 days
