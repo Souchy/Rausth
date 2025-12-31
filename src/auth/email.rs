@@ -1,9 +1,9 @@
-use crate::models::{AuthResponse, LoginRequest, RegisterRequest, User};
+use crate::models::{AuthResponse, LoginRequest, RegisterRequest};
 use crate::utils::{AuthError, AuthResult};
 use crate::auth::jwt::JwtService;
+use crate::db::DatabaseService;
 use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::Utc;
-use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Email/Password authentication service.
@@ -29,23 +29,18 @@ impl EmailPasswordAuth {
     /// Returns an error if the email is already registered.
     ///
     /// # Arguments
-    /// * `db` - Database connection pool
+    /// * `db` - Database service for user management
     /// * `request` - Registration request containing email and password
     ///
     /// # Returns
     /// Authentication response with JWT tokens
     pub async fn register(
         &self,
-        db: &PgPool,
+        db: &dyn DatabaseService,
         request: RegisterRequest,
     ) -> AuthResult<AuthResponse> {
         // Check if user already exists
-        let existing_user = sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE email = $1 AND provider = 'email'"
-        )
-        .bind(&request.email)
-        .fetch_optional(db)
-        .await?;
+        let existing_user = db.find_user_by_email_and_provider(&request.email, "email").await?;
 
         if existing_user.is_some() {
             return Err(AuthError::UserAlreadyExists);
@@ -55,17 +50,7 @@ impl EmailPasswordAuth {
         let password_hash = hash(&request.password, DEFAULT_COST)?;
 
         // Create the user
-        let user = sqlx::query_as::<_, User>(
-            r#"
-            INSERT INTO users (email, password_hash, provider, created_at, updated_at)
-            VALUES ($1, $2, 'email', NOW(), NOW())
-            RETURNING *
-            "#
-        )
-        .bind(&request.email)
-        .bind(&password_hash)
-        .fetch_one(db)
-        .await?;
+        let user = db.create_user(&request.email, Some(&password_hash), "email", None).await?;
 
         // Generate tokens
         self.generate_auth_response(db, user.id).await
@@ -76,24 +61,20 @@ impl EmailPasswordAuth {
     /// This method verifies the user's credentials and generates new JWT tokens.
     ///
     /// # Arguments
-    /// * `db` - Database connection pool
+    /// * `db` - Database service for user management
     /// * `request` - Login request containing email and password
     ///
     /// # Returns
     /// Authentication response with JWT tokens
     pub async fn login(
         &self,
-        db: &PgPool,
+        db: &dyn DatabaseService,
         request: LoginRequest,
     ) -> AuthResult<AuthResponse> {
         // Fetch the user
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE email = $1 AND provider = 'email'"
-        )
-        .bind(&request.email)
-        .fetch_optional(db)
-        .await?
-        .ok_or(AuthError::InvalidCredentials)?;
+        let user = db.find_user_by_email_and_provider(&request.email, "email")
+            .await?
+            .ok_or(AuthError::InvalidCredentials)?;
 
         // Verify password
         let password_hash = user.password_hash.ok_or(AuthError::InvalidCredentials)?;
@@ -109,7 +90,7 @@ impl EmailPasswordAuth {
 
     async fn generate_auth_response(
         &self,
-        db: &PgPool,
+        db: &dyn DatabaseService,
         user_id: Uuid,
     ) -> AuthResult<AuthResponse> {
         let access_token = self.jwt_service.generate_access_token(user_id)?;
@@ -120,17 +101,7 @@ impl EmailPasswordAuth {
         let refresh_token_expiry = Utc::now() 
             + chrono::Duration::seconds(self.jwt_service.get_refresh_token_expiry_seconds());
 
-        sqlx::query(
-            r#"
-            INSERT INTO refresh_tokens (user_id, token, expires_at, created_at)
-            VALUES ($1, $2, $3, NOW())
-            "#
-        )
-        .bind(user_id)
-        .bind(&refresh_token)
-        .bind(refresh_token_expiry)
-        .execute(db)
-        .await?;
+        db.store_refresh_token(user_id, &refresh_token, refresh_token_expiry).await?;
 
         Ok(AuthResponse {
             access_token,

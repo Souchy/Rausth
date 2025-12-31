@@ -30,11 +30,14 @@ pub async fn handler(_req: Request) -> Result<Response<Body>, Error> {
     let request: OAuthCallbackRequest = serde_json::from_slice(body_bytes)
         .map_err(|e| Error::from(format!("Invalid request: {}", e)))?;
 
-    let pool = db::get_pool().await.map_err(|e| Error::from(format!("Database error: {}", e)))?;
+    // Get database service
+    let db_service = db::get_db_service().await;
+
+    // Process OAuth callback
     let jwt_service = JwtService::new(config.jwt.clone());
     let oauth_service = MicrosoftOAuthService::new(jwt_service);
 
-    match oauth_service.handle_callback(oauth_config, request.code, pool).await {
+    match oauth_service.handle_callback(oauth_config, request.code, db_service.as_ref()).await {
         Ok(response) => {
             Ok(Response::builder()
                 .status(StatusCode::OK)

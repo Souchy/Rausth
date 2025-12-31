@@ -4,6 +4,39 @@ mod postgres;
 pub use service::DatabaseService;
 pub use postgres::PostgresService;
 
+use once_cell::sync::OnceCell;
+use std::sync::Arc;
+
+/// Global database service instance.
+///
+/// This singleton is initialized once and reused throughout the application.
+static DB_SERVICE: OnceCell<Arc<dyn DatabaseService>> = OnceCell::new();
+
+/// Get or initialize the global database service.
+///
+/// This function returns a reference to the global database service singleton.
+/// On first call, it initializes the PostgreSQL service and runs migrations.
+///
+/// # Returns
+/// A reference to the database service implementation
+///
+/// # Panics
+/// Panics if database initialization fails
+pub async fn get_db_service() -> &'static Arc<dyn DatabaseService> {
+    if let Some(service) = DB_SERVICE.get() {
+        return service;
+    }
+
+    // Initialize the database service
+    let service = Arc::new(PostgresService::new()) as Arc<dyn DatabaseService>;
+    
+    // Run migrations
+    service.initialize().await.expect("Failed to initialize database");
+    
+    DB_SERVICE.set(service).unwrap_or_else(|_| panic!("Failed to set database service"));
+    DB_SERVICE.get().unwrap()
+}
+
 // Legacy function for backward compatibility
 // TODO: Remove this once all code is migrated to use DatabaseService trait
 pub async fn get_pool() -> Result<&'static sqlx::PgPool, sqlx::Error> {

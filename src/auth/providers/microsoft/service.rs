@@ -1,6 +1,7 @@
 use super::types::MicrosoftUserInfo;
 use crate::auth::jwt::JwtService;
 use crate::config::OAuthProviderConfig;
+use crate::db::DatabaseService;
 use crate::models::{AuthResponse, User};
 use crate::utils::{AuthError, AuthResult};
 use chrono::Utc;
@@ -8,7 +9,6 @@ use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
     ClientSecret, CsrfToken, RedirectUrl, TokenResponse as OAuth2TokenResponse, TokenUrl,
 };
-use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Microsoft OAuth service for handling authentication flows.
@@ -56,7 +56,7 @@ impl MicrosoftOAuthService {
     /// # Arguments
     /// * `config` - Microsoft OAuth provider configuration
     /// * `code` - Authorization code from Microsoft
-    /// * `db` - Database connection pool
+    /// * `db` - Database service for user management
     ///
     /// # Returns
     /// Authentication response with JWT tokens for the application
@@ -64,7 +64,7 @@ impl MicrosoftOAuthService {
         &self,
         config: &OAuthProviderConfig,
         code: String,
-        db: &PgPool,
+        db: &dyn DatabaseService,
     ) -> AuthResult<AuthResponse> {
         let client = self.create_client(config)?;
 
@@ -134,46 +134,27 @@ impl MicrosoftOAuthService {
         Ok((user_info.id, email))
     }
 
-    /// Find an existing user or create a new one.
+    /// Find an existing user or create a new one using the database service.
     async fn find_or_create_user(
         &self,
-        db: &PgPool,
+        db: &dyn DatabaseService,
         email: &str,
         provider_id: &str,
     ) -> AuthResult<User> {
         // Try to find existing user
-        if let Some(user) = sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE provider = $1 AND provider_id = $2",
-        )
-        .bind("microsoft")
-        .bind(provider_id)
-        .fetch_optional(db)
-        .await?
-        {
+        if let Some(user) = db.find_user_by_provider("microsoft", provider_id).await? {
             return Ok(user);
         }
 
         // Create new user
-        let user = sqlx::query_as::<_, User>(
-            r#"
-            INSERT INTO users (email, provider, provider_id, created_at, updated_at)
-            VALUES ($1, $2, $3, NOW(), NOW())
-            RETURNING *
-            "#,
-        )
-        .bind(email)
-        .bind("microsoft")
-        .bind(provider_id)
-        .fetch_one(db)
-        .await?;
-
+        let user = db.create_user(email, None, "microsoft", Some(provider_id)).await?;
         Ok(user)
     }
 
     /// Generate authentication response with JWT tokens.
     async fn generate_auth_response(
         &self,
-        db: &PgPool,
+        db: &dyn DatabaseService,
         user_id: Uuid,
     ) -> AuthResult<AuthResponse> {
         let access_token = self.jwt_service.generate_access_token(user_id)?;
@@ -184,17 +165,7 @@ impl MicrosoftOAuthService {
         let refresh_token_expiry = Utc::now()
             + chrono::Duration::seconds(self.jwt_service.get_refresh_token_expiry_seconds());
 
-        sqlx::query(
-            r#"
-            INSERT INTO refresh_tokens (user_id, token, expires_at, created_at)
-            VALUES ($1, $2, $3, NOW())
-            "#,
-        )
-        .bind(user_id)
-        .bind(&refresh_token)
-        .bind(refresh_token_expiry)
-        .execute(db)
-        .await?;
+        db.store_refresh_token(user_id, &refresh_token, refresh_token_expiry).await?;
 
         Ok(AuthResponse {
             access_token,
