@@ -6,15 +6,34 @@ use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// Email/Password authentication service.
+///
+/// This service handles user registration and login with email and password.
+/// Passwords are hashed using bcrypt before storage.
 pub struct EmailPasswordAuth {
     jwt_service: JwtService,
 }
 
 impl EmailPasswordAuth {
+    /// Create a new email/password authentication service.
+    ///
+    /// # Arguments
+    /// * `jwt_service` - JWT service for generating application tokens
     pub fn new(jwt_service: JwtService) -> Self {
         Self { jwt_service }
     }
 
+    /// Register a new user with email and password.
+    ///
+    /// This method creates a new user account, hashing the password with bcrypt.
+    /// Returns an error if the email is already registered.
+    ///
+    /// # Arguments
+    /// * `db` - Database connection pool
+    /// * `request` - Registration request containing email and password
+    ///
+    /// # Returns
+    /// Authentication response with JWT tokens
     pub async fn register(
         &self,
         db: &PgPool,
@@ -52,6 +71,16 @@ impl EmailPasswordAuth {
         self.generate_auth_response(db, user.id).await
     }
 
+    /// Authenticate a user with email and password.
+    ///
+    /// This method verifies the user's credentials and generates new JWT tokens.
+    ///
+    /// # Arguments
+    /// * `db` - Database connection pool
+    /// * `request` - Login request containing email and password
+    ///
+    /// # Returns
+    /// Authentication response with JWT tokens
     pub async fn login(
         &self,
         db: &PgPool,

@@ -2,6 +2,20 @@ use rausth::{auth::{JwtService, RefreshTokenService}, config::Config, db, models
 use vercel_runtime::{run, Body, Error, Request, Response, StatusCode};
 use serde_json::json;
 
+/// Handle token refresh request.
+///
+/// This endpoint exchanges a valid refresh token for a new access token and refresh token.
+/// The old refresh token is invalidated upon successful refresh.
+///
+/// # Request Body
+/// ```json
+/// {
+///   "refresh_token": "uuid-refresh-token"
+/// }
+/// ```
+///
+/// # Response
+/// Returns new JWT access token and refresh token on success.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     run(handler).await

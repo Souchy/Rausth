@@ -4,15 +4,34 @@ use crate::auth::jwt::JwtService;
 use chrono::Utc;
 use sqlx::PgPool;
 
+/// Refresh token service for rotating application tokens.
+///
+/// This service handles the exchange of refresh tokens for new access tokens,
+/// implementing token rotation for enhanced security.
 pub struct RefreshTokenService {
     jwt_service: JwtService,
 }
 
 impl RefreshTokenService {
+    /// Create a new refresh token service.
+    ///
+    /// # Arguments
+    /// * `jwt_service` - JWT service for generating new tokens
     pub fn new(jwt_service: JwtService) -> Self {
         Self { jwt_service }
     }
 
+    /// Exchange a refresh token for new access and refresh tokens.
+    ///
+    /// This method validates the refresh token, checks expiration, and generates
+    /// new tokens. The old refresh token is deleted from the database (token rotation).
+    ///
+    /// # Arguments
+    /// * `db` - Database connection pool
+    /// * `request` - Refresh token request containing the refresh token
+    ///
+    /// # Returns
+    /// New authentication response with fresh tokens
     pub async fn refresh(
         &self,
         db: &PgPool,

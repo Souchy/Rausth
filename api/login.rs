@@ -2,6 +2,21 @@ use rausth::{auth::{EmailPasswordAuth, JwtService}, config::Config, db, models::
 use vercel_runtime::{run, Body, Error, Request, Response, StatusCode};
 use serde_json::json;
 
+/// Handle user login with email and password.
+///
+/// This endpoint authenticates a user with their email and password.
+/// On successful authentication, returns JWT tokens for accessing the application.
+///
+/// # Request Body
+/// ```json
+/// {
+///   "email": "user@example.com",
+///   "password": "securepassword123"
+/// }
+/// ```
+///
+/// # Response
+/// Returns JWT access token and refresh token on success.
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     run(handler).await
