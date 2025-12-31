@@ -28,16 +28,16 @@ config = "0.13"
 # Each handler has to be specified as [[bin]]
 [[bin]]
 name = "signin"
-path = "api/signin.rs"
+path = "api/get_login_url.rs"
 
 
 # Each handler has to be specified as [[bin]]
 [[bin]]
 name = "refresh"
-path = "api/refresh.rs"
+path = "api/refresh_access.rs"
 
 
 # Each handler has to be specified as [[bin]]
 [[bin]]
-name = "hello"
-path = "api/hello.rs"
+name = "callback"
+path = "api/exchange_code.rs"

@@ -20,9 +20,8 @@ use serde::Deserialize;
 //     }
 // }
 
-pub static SETTINGS: Lazy<Settings> = Lazy::new(|| {
-    read_settings().expect("Failed to read configuration")
-});
+pub static SETTINGS: Lazy<Settings> =
+    Lazy::new(|| read_settings().expect("Failed to read configuration"));
 
 fn read_settings() -> Result<Settings, ConfigError> {
     let settings = Config::builder()
@@ -36,7 +35,10 @@ fn read_settings() -> Result<Settings, ConfigError> {
     let final_settings: Settings = settings.try_deserialize()?;
 
     // Use the settings in your application
-    println!("Database: {:?}, at {}", final_settings.database.kind, final_settings.database.url);
+    println!(
+        "Database: {:?}, at {}",
+        final_settings.database.kind, final_settings.database.url
+    );
 
     Ok(final_settings)
 }
@@ -56,8 +58,8 @@ pub struct AuthProviderConfig {
     pub redirect_uri: String,
     pub scopes: String,
     // maybe urls to get user_info, exchange code for tokens, refresh tokens?
-    pub auth_url: String, // exchange code?
-    pub token_url: String, // refresh token?
+    pub auth_url: String,      // exchange code?
+    pub token_url: String,     // refresh token?
     pub user_info_url: String, // get user info?
 }
 
@@ -75,13 +77,29 @@ pub enum DatabaseType {
     MySQL,
 }
 
+// #[derive(EnumString)] // crate "strum" if you want automatic string conversion
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub enum AuthProviderType {
+    Unknown(String),
     EmailPassword,
     Microsoft,
     Google,
-    GitHub,
+    Github,
     Facebook,
     Twitter,
 }
 
+impl From<&str> for AuthProviderType {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "emailpassword" | "email" => AuthProviderType::EmailPassword,
+            "microsoft" | "ms" => AuthProviderType::Microsoft,
+            "google" => AuthProviderType::Google,
+            "github" | "git" => AuthProviderType::Github,
+            "facebook" | "fb" => AuthProviderType::Facebook,
+            "twitter" | "tw" => AuthProviderType::Twitter,
+            // "okta" => AuthProviderType::Okta,
+            other => AuthProviderType::Unknown(other.to_string()),
+        }
+    }
+}
