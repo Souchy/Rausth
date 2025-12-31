@@ -7,6 +7,7 @@ pub mod repo;
 pub mod db;
 pub mod error;
 pub mod auth_service;
+pub mod jwt_service;
 
 // pub static CONFIG: Lazy<config::Config> = Lazy::new(|| {
 //     config::Config::from_env().unwrap()
