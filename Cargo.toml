@@ -25,19 +25,30 @@ bcrypt = "0.15"
 jsonwebtoken = "9.0"
 config = "0.13"
 
+
+# This section configures settings for the release profile, which optimizes the build for performance.
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+
 # Each handler has to be specified as [[bin]]
 [[bin]]
+name = "hello"
+path = "api/hello.rs"
+
+[[bin]]
 name = "signin"
-path = "api/get_login_url.rs"
+path = "api/signin.rs"
 
+[[bin]]
+name = "callback"
+path = "api/exchange_code.rs"
 
-# Each handler has to be specified as [[bin]]
 [[bin]]
 name = "refresh"
 path = "api/refresh_access.rs"
 
-
-# Each handler has to be specified as [[bin]]
 [[bin]]
-name = "callback"
-path = "api/exchange_code.rs"
+name = "refresh_provider"
+path = "api/refresh_provider.rs"

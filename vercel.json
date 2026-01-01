@@ -6,8 +6,20 @@
   },
   "rewrites": [
     {
-      "source": "/login/:provider",
-      "destination": "/api/get_login_url"
+      "source": "/signin/:provider",
+      "destination": "/api/signin"
+    },
+    {
+      "source": "/callback/:provider",
+      "destination": "/api/exchange_code"
+    },
+    {
+      "source": "/refresh/:provider",
+      "destination": "/api/refresh_provider"
+    },
+    {
+      "source": "/refresh",
+      "destination": "/api/refresh_access"
     }
   ]
 }
